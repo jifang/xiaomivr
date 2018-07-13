@@ -1,4 +1,4 @@
-# XiaoMi VR Hybrid App
+# XiaoMi/Oculus VR Hybrid App
 
 This guide will help you to reproduce some controller issues in XiaoMi/Oculus hybrid app
 
@@ -6,10 +6,10 @@ This guide will help you to reproduce some controller issues in XiaoMi/Oculus hy
 * Mac OSX 10.13.4
 * Unity 2017.4.0f1
 * Oculus Mobile SDK v1.7
-* Xiaomi Unity SDK v1.4.5
+* Xiaomi Unity SDK v1.4.5 or Oculus Unity SDK v1.26.0
 
 ## Description ##
-We are making a hybrid VR app using both Xiaomi Unity VR SDK and Oculus native SDK.
+We are making a hybrid VR app using both Xiaomi(or Oculus) Unity VR SDK and Oculus native SDK.
 We are using the Oculus sample VrController as the native code and made some minimal changes so it can be launched within the Unity app.
 
 The native sample VrController app works well. However, if it is launched from the Unity-built app. The back/home keys are not working. Other keys are working fine.
@@ -17,7 +17,8 @@ Dive into the code of `vrcontroller.cpp` line 982
 `vrapi_GetCurrentInputState()` gets value 0 for `remoteInputState` when back/home is clicked
 
 ## Quick Setup ##
-1. Use the demo scene `360ViewController` from Xiaomi SDK
+1. For Xiaomi headset, use the demo scene `360ViewController` from Xiaomi Unity SDK
+   For Oculus Go/Gear VR, use the demo scene `GearVrControllerTest` from Oculus Unity SDK
 2. Clone this repo
 3. Copy the following aar libraries into the Unity project
  	* `UnitySDK/Assets/Plugins/VrSound.aar`
@@ -25,15 +26,18 @@ Dive into the code of `vrcontroller.cpp` line 982
 	* `UnitySDK/Assets/Plugins/VrGUI.aar`
 	* `UnitySDK/Assets/Plugins/VrAppFramework.aar`
 	* `UnitySDK/Assets/Plugins/vrcontroller-release.aar`
-4. Copy the `UnitySDK/Assets/MIVR/Scripts/ButtonClick.cs` to replace the scipt in Unity
-5. Run scene `360ViewController`
-6. After clicking the button, the app will be transited to the natvie code (Oculus sample VrController). We can see that both back/home button are not responding.
+4. For Xiaomi headset, Copy the `UnitySDK/Assets/MIVR/Scripts/ButtonClick.cs` to replace the scipt in Unity
+   For Oculus Go/Gear VR, Copy the `UnitySDK/Assets/OVR/Scripts/LaunchNative.cs` and attach to any gameobject in the scene
+5. Run demo scene 
+6. For Xiaomi headset, after clicking the button, the app will be transited to the natvie code (Oculus sample VrController). 
+   For Oculus Go/Gear VR, the app will be transited to the natvie code (Oculus sample VrController) after launch.
+7. We can see that both back/home button are not responding.
 
 
-## Step-by-step instruction ##
+## Step-by-step Instruction ##
 This section descibe the detailed change we made on the original sample code.
 
-**IMPORTANT**: It is important to use Oculus Mobile SDK v1.7. Other version may conflict with the Oculus libraries embedded in Xiaomi Unity SDK.
+**IMPORTANT**: It is important to use Oculus Mobile SDK v1.7. Other version may conflict with the Oculus libraries embedded in Xiaomi/Oculus Unity SDK.
 
 ### Download [Oculus Mobile SDK v1.7](https://developer.oculus.com/downloads/package/oculus-mobile-sdk/1.7.0/) 
 
@@ -165,7 +169,24 @@ public class MainActivity extends VrActivity {
 ##### 5. Build the libray by running `Project/Android/build.py`
 ##### 6. Copy the `VrSamples/Native/VrController/Projects/Android/build/outputs/aar/vrcontroller-release.aar` into the Unity project under `Assets/Plugins/Android/`
 
-### Integrate into Unity ###
+
+### Integrate into Unity (Oculus) ###
+##### 1. Use the demo scene `GearVrControllerTest `
+##### 2. Add a script and attach to any gameobject
+```c#
+    public void OnEnable()
+    {
+		  var vrControllerClass = new AndroidJavaClass ("com.oculus.vrcontroller.MainActivity");
+
+		  AndroidJavaClass unityPlayerClass = new AndroidJavaClass ("com.unity3d.player.UnityPlayer");
+		  AndroidJavaObject unityPlayer = unityPlayerClass.GetStatic<AndroidJavaObject> ("currentActivity");
+
+		  vrControllerClass.CallStatic ("start", unityPlayer);
+    }
+
+```
+
+### Integrate into Unity (Xiaomi) ###
 ##### 1. Use the demo scene `360ViewController`
 ##### 2. Modify the `ButtonClick.cs`, so when clicking the button the native VrController will be launched
 ```c#
